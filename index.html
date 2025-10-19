@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            background: #000;
+            font-family: "Courier New", Courier, monospace;
+        }
+        canvas {
+            border: 3px solid white;
+            position: fixed;
+            right: 0;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+        }
+        .waiting-hint {
+            position: fixed;
+            right: 0;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto;
+            color: white;
+            display: inline;
+            width: max-content;
+            height: max-content;
+            font-size: 30px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="waiting">
+
+<div class="waiting-hint">Waiting for opponent</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on("connect", () => {
+        console.log("Connected with ID:", socket.id);
+    });
+    socket.on('start', () => {
+        console.log('started')
+        document.body.classList.remove('waiting');
+    })
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = canvas.width / 2;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let playerY = 50;
+    let remotePlayerY = 50;
+
+    function renderPlayer(y, isMe){
+        ctx.save()
+        ctx.fillStyle = 'white';
+        ctx.fillRect(isMe ? canvas.width - 10 : 0, y, 10, 100);
+        ctx.restore()
+    }
+
+    const pressedKeys = new Set();
+    window.onkeydown = (e) => pressedKeys.add(e.code);
+    window.onkeyup = e => pressedKeys.delete(e.code);
+
+    function animate(){
+        requestAnimationFrame(animate);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        renderPlayer(playerY, true);
+        renderPlayer(remotePlayerY, false);
+
+    }
+
+    animate();
+
+
+</script>
+
+</body>
+</html>
