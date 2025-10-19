@@ -25,11 +25,14 @@
             bottom: 0;
             margin: auto;
             color: white;
-            display: inline;
             width: max-content;
             height: max-content;
             font-size: 30px;
             font-weight: bold;
+            display: none;
+        }
+        body.waiting .waiting-hint{
+            display: block;
         }
     </style>
 </head>
@@ -56,11 +59,15 @@
 
     let playerY = 50;
     let remotePlayerY = 50;
+    const config = {
+        plateHeight: 100,
+        speed: 10
+    }
 
     function renderPlayer(y, isMe){
         ctx.save()
         ctx.fillStyle = 'white';
-        ctx.fillRect(isMe ? canvas.width - 10 : 0, y, 10, 100);
+        ctx.fillRect(isMe ? canvas.width - 10 : 0, y, 10, config.plateHeight);
         ctx.restore()
     }
 
@@ -68,8 +75,24 @@
     window.onkeydown = (e) => pressedKeys.add(e.code);
     window.onkeyup = e => pressedKeys.delete(e.code);
 
-    function animate(){
+
+    const targetFPS = 30;
+    const frameDuration = 1000 / targetFPS; // milliseconds per frame
+    let lastFrameTime = 0;
+    function animate(currentTime){
         requestAnimationFrame(animate);
+
+        const delta = currentTime - lastFrameTime;
+        if (delta < frameDuration) return; // too soon — skip this frame
+
+        if(pressedKeys.has('ArrowDown')){
+            playerY = Math.min((playerY + config.speed), canvas.height - config.plateHeight);
+        }
+        if(pressedKeys.has('ArrowUp')){
+            playerY = Math.max(0, playerY - config.speed);
+        }
+
+        lastFrameTime = currentTime;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -79,8 +102,6 @@
     }
 
     animate();
-
-
 </script>
 
 </body>
