@@ -43,13 +43,37 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
+    let remoteUserId;
+    let isMain = true;
     socket.on("connect", () => {
         console.log("Connected with ID:", socket.id);
     });
-    socket.on('start', () => {
+    socket.on("update-y", ({ y, ball: ballString }) => {
+        remotePlayerY = y;
+    })
+    socket.on("update-ball", ({ y, ball: ballString }) => {
+        ball = (ballString)
+    })
+    socket.on('start', ({ opponentId, main }) => {
+        isMain = main;
+        remoteUserId = opponentId
         console.log('started')
         document.body.classList.remove('waiting');
-    })
+    });
+
+    let ball = {
+        pos: [100, 100],
+        speed: [10, 10],
+        radius: 10
+    };
+    function renderBall(){
+        ctx.save();
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(...ball.pos, ball.radius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+    }
 
     const canvas = document.createElement('canvas');
     canvas.width = 800;
@@ -91,14 +115,41 @@
         if(pressedKeys.has('ArrowUp')){
             playerY = Math.max(0, playerY - config.speed);
         }
+        socket.emit('send', { id: remoteUserId, data: ['update-y', {y: playerY}] });
+
+        if(isMain){
+            ball.pos[0] += ball.speed[0];
+            ball.pos[1] += ball.speed[1];
+
+            if(ball.pos[1] + ball.radius >= canvas.height){
+                ball.speed[1] *= -1;
+                ball.speed[1] += Math.random();
+            }
+            if(ball.pos[1] - ball.radius <= 0){
+                ball.speed[1] *= -1;
+                ball.speed[1] += Math.random();
+            }
+            if(ball.pos[0] + ball.radius >= canvas.width){
+                ball.speed[0] *= -1;
+                ball.speed[0] += Math.random();
+            }
+            if(ball.pos[0] - ball.radius <= 0){
+                ball.speed[0] *= -1;
+                ball.speed[0] += Math.random();
+            }
+
+            
+
+            socket.emit('send', { id: remoteUserId, data: ['update-ball', { ball: (ball) }] });
+        }
 
         lastFrameTime = currentTime;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        renderBall();
         renderPlayer(playerY, true);
         renderPlayer(remotePlayerY, false);
-
     }
 
     animate();

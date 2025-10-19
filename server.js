@@ -29,13 +29,17 @@ io.on("connection", (socket) => {
         console.log(`🎮 Match made: ${socket.id} ↔ ${opponentId}`);
 
         // Notify both players
-        io.to(socket.id).emit("start", { opponentId });
+        io.to(socket.id).emit("start", { opponentId, main: true });
         io.to(opponentId).emit("start", { opponentId: socket.id });
     } else {
         // No one waiting → put this user in queue
         waitingQueue.push(socket.id);
         console.log(`🕓 ${socket.id} waiting for opponent...`);
     }
+
+    socket.on('send', ({ id, data }) => {
+        io.to(id).emit(...data);
+    })
 
     // Handle disconnection
     socket.on("disconnect", () => {
